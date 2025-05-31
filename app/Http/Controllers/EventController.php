@@ -33,8 +33,31 @@ class EventController extends Controller
             $query->where('category_id', $request->category);
         }
 
+        // Filtre par statut
+        $status = $request->get('status', 'À venir');
+        if ($status) {
+            $now = Carbon::now();
+            $query->where(function($q) use ($status, $now) {
+                switch($status) {
+                    case 'À venir':
+                        $q->where('start_date', '>', $now);
+                        break;
+                    case 'En cours':
+                        $q->where('start_date', '<=', $now)
+                          ->where('end_date', '>=', $now);
+                        break;
+                    case 'Terminé':
+                        $q->where('end_date', '<', $now);
+                        break;
+                }
+            });
+        }
+
         $events = $query->orderBy('start_date', 'desc')->paginate(10);
         $categories = Category::where('active', 1)->get();
+
+        // Liste des statuts possibles
+        $statuses = ['À venir', 'En cours', 'Terminé'];
 
         // Calculer les statistiques pour chaque événement
         $events->each(function($event) {
@@ -89,10 +112,13 @@ class EventController extends Controller
             }
         });
 
-        // Maintenir le filtre dans la pagination
-        $events->appends(['category' => $request->category]);
+        // Maintenir les filtres dans la pagination
+        $events->appends([
+            'category' => $request->category,
+            'status' => $request->status
+        ]);
 
-        return view('events.index', compact('events', 'categories'));
+        return view('events.index', compact('events', 'categories', 'statuses'));
     }
 
     public function create()
@@ -125,6 +151,8 @@ class EventController extends Controller
                 'description' => 'required|string',
                 'category_id' => 'required|exists:categories,id',
                 'location' => 'required|string|max:255',
+                'latitude' => 'required|numeric|between:-90,90',
+                'longitude' => 'required|numeric|between:-180,180',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'start_time' => 'required|date_format:H:i',
@@ -173,6 +201,8 @@ class EventController extends Controller
                 'description' => $validated['description'],
                 'category_id' => $validated['category_id'],
                 'location' => $validated['location'],
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
                 'start_date' => $validated['start_date'],
                 'end_date' => $validated['end_date'],
                 'start_time' => $validated['start_time'],
@@ -180,6 +210,7 @@ class EventController extends Controller
                 'image_url' => $validated['image_url'] ?? null,
                 'is_multi_day' => $validated['start_date'] !== $validated['end_date'],
                 'has_specific_time' => true,
+                'status' => 'DRAFT'
             ]);
 
             \Log::info('Event created', ['event' => $event->toArray()]);
@@ -245,11 +276,28 @@ class EventController extends Controller
             'start_time' => 'required_if:has_specific_time,true',
             'end_time' => 'required_if:has_specific_time,true|after_or_equal:start_time',
             'location' => 'required|string|max:255',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
             'category_id' => 'required|exists:categories,id',
             'image_url' => 'nullable|image|max:2048',
         ]);
 
         try {
+            $data = [
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+                'is_multi_day' => $validated['is_multi_day'] ?? false,
+                'has_specific_time' => $validated['has_specific_time'] ?? true,
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
+                'location' => $validated['location'],
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
+                'category_id' => $validated['category_id'],
+            ];
+
             // Gérer le téléchargement de la nouvelle image si présente
             if ($request->hasFile('image_url')) {
                 // Supprimer l'ancienne image si elle existe
@@ -259,18 +307,18 @@ class EventController extends Controller
 
                 // Uploader la nouvelle image
                 $path = $this->fileUploadService->uploadFile($request->file('image_url'), 'event-covers');
-                $validated['image_url'] = $path;
+                $data['image_url'] = $path;
             } else {
                 // Garder l'ancienne image
-                $validated['image_url'] = $event->image_url;
+                $data['image_url'] = $event->image_url;
             }
 
             // Déterminer automatiquement si c'est un événement sur plusieurs jours
-            $startDate = Carbon::parse($validated['start_date']);
-            $endDate = Carbon::parse($validated['end_date']);
-            $validated['is_multi_day'] = !$startDate->isSameDay($endDate);
+            $startDate = Carbon::parse($data['start_date']);
+            $endDate = Carbon::parse($data['end_date']);
+            $data['is_multi_day'] = !$startDate->isSameDay($endDate);
 
-            $event->update($validated);
+            $event->update($data);
 
             return redirect()->route('events.index')
                 ->with('success', 'Événement mis à jour avec succès.');

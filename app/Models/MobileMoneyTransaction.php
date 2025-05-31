@@ -15,7 +15,6 @@ class MobileMoneyTransaction extends Model
     const UPDATED_AT = 'updatedAt';
 
     protected $fillable = [
-        'ticketId',
         'transactionReference',
         'amount',
         'phoneNumber',
@@ -26,20 +25,17 @@ class MobileMoneyTransaction extends Model
         'responseData',
         'userId',
         'ticketTypeId',
-        'quantity'
+        'quantity',
+        'ticketIds'
     ];
 
     protected $casts = [
         'amount' => 'float',
-        'quantity' => 'integer',
+        'ticketIds' => 'array',
+        'responseData' => 'json',
         'createdAt' => 'datetime',
         'updatedAt' => 'datetime'
     ];
-
-    public function ticket()
-    {
-        return $this->belongsTo(Ticket::class, 'ticketId');
-    }
 
     public function user()
     {
@@ -49,5 +45,18 @@ class MobileMoneyTransaction extends Model
     public function ticketType()
     {
         return $this->belongsTo(TicketType::class, 'ticketTypeId');
+    }
+
+    public function tickets()
+    {
+        return $this->hasMany(Ticket::class, 'id', 'ticketIds');
+    }
+
+    public function getTicketIdsAttribute($value)
+    {
+        if (empty($value)) {
+            return [];
+        }
+        return is_array($value) ? $value : json_decode($value, true) ?? [];
     }
 } 

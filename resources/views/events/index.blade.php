@@ -14,7 +14,14 @@
                             </option>
                         @endforeach
                     </select>
-                    @if(request()->has('category'))
+                    <select name="status" onchange="this.form.submit()" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        @foreach($statuses as $statusOption)
+                            <option value="{{ $statusOption }}" {{ request('status', 'À venir') == $statusOption ? 'selected' : '' }}>
+                                {{ $statusOption }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @if(request()->has('category') || request()->has('status'))
                         <a href="{{ route('events.index') }}" class="text-gray-600 hover:text-gray-900">
                             Réinitialiser
                         </a>
@@ -42,17 +49,17 @@
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                            <thead class="bg-blue-500">
                                 <tr>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cover</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Titre</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lieu</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catégorie</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tickets</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenus</th>
-                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Cover</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Titre</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Date</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Lieu</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Catégorie</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Statut</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Tickets</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Revenus</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -100,8 +107,8 @@
                                                 @endif
                                             </div>
                                         </td>
-                                        <td class="px-3 py-2 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">
+                                        <td class="px-3 py-2">
+                                            <div class="text-sm text-gray-900 max-w-[200px] truncate" title="{{ $event->location }}">
                                                 {{ $event->location }}
                                             </div>
                                         </td>
@@ -198,9 +205,63 @@
         </div>
     </div>
 
+    <!-- Inclure les fichiers CSS et JS de Leaflet au début du fichier -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
     <!-- Modal de création d'événement -->
     <x-modal name="create-event" :show="$errors->isNotEmpty()" maxWidth="2xl" focusable>
-        <form method="POST" action="{{ route('events.store') }}" class="p-6" enctype="multipart/form-data" x-data="{ isMultipleDays: false }">
+        <form method="POST" action="{{ route('events.store') }}" class="p-6" enctype="multipart/form-data" 
+            x-data="{ 
+                isMultipleDays: false,
+                createMap: null,
+                createMarker: null,
+                initCreateMap() {
+                    if (this.createMap) {
+                        this.createMap.remove();
+                        this.createMap = null;
+                    }
+                    
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            const mapElement = document.getElementById('create-map');
+                            if (!mapElement) return;
+
+                            this.createMap = L.map(mapElement).setView([6.1319, 1.2228], 13);
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '© OpenStreetMap contributors'
+                            }).addTo(this.createMap);
+
+                            this.createMarker = L.marker([6.1319, 1.2228]).addTo(this.createMap);
+
+                            const searchControl = L.Control.geocoder({
+                                defaultMarkGeocode: false
+                            }).addTo(this.createMap);
+
+                            searchControl.on('markgeocode', (e) => {
+                                const { center, name } = e.geocode;
+                                this.createMarker.setLatLng(center);
+                                this.createMap.setView(center, 16);
+                                document.getElementById('create-latitude').value = center.lat.toFixed(6);
+                                document.getElementById('create-longitude').value = center.lng.toFixed(6);
+                                document.getElementById('create-location').value = name;
+                            });
+
+                            this.createMap.on('click', (e) => {
+                                this.createMarker.setLatLng(e.latlng);
+                                document.getElementById('create-latitude').value = e.latlng.lat.toFixed(6);
+                                document.getElementById('create-longitude').value = e.latlng.lng.toFixed(6);
+                            });
+
+                            this.createMap.invalidateSize();
+                        }, 300);
+                    });
+                }
+            }"
+            x-init="$watch('$store.modal.isOpen', value => { if (value) { initCreateMap() } })"
+        >
             @csrf
 
             <div class="space-y-6 max-h-[80vh] overflow-y-auto pr-4">
@@ -517,11 +578,27 @@
                     </button>
                 </div>
 
-                <!-- Lieu -->
-                <div>
-                    <x-input-label for="location" :value="__('Lieu *')" />
-                    <x-text-input id="location" name="location" type="text" class="mt-1 block w-full" :value="old('location')" required />
-                    <x-input-error class="mt-2" :messages="$errors->get('location')" />
+                <!-- Lieu et carte pour la création -->
+                <div class="space-y-4">
+                    <div>
+                        <x-input-label for="create-location" :value="__('Lieu *')" />
+                        <x-text-input id="create-location" name="location" type="text" class="mt-1 block w-full" :value="old('location')" required />
+                        <x-input-error class="mt-2" :messages="$errors->get('location')" />
+                    </div>
+
+                    <div class="border rounded-lg p-4">
+                        <div id="create-map" class="h-64 w-full rounded-lg mb-4"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="create-latitude" :value="__('Latitude')" />
+                                <x-text-input id="create-latitude" name="latitude" type="text" class="mt-1 block w-full" :value="old('latitude', '6.1319')" readonly />
+                            </div>
+                            <div>
+                                <x-input-label for="create-longitude" :value="__('Longitude')" />
+                                <x-text-input id="create-longitude" name="longitude" type="text" class="mt-1 block w-full" :value="old('longitude', '1.2228')" readonly />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -600,7 +677,58 @@
 
         <!-- Modal de modification -->
         <x-modal name="edit-event-{{ $event->id }}" maxWidth="2xl">
-            <form method="POST" action="{{ route('events.update', $event) }}" class="p-6" enctype="multipart/form-data" x-data="{ isMultipleDays: {{ $event->is_multi_day ? 'true' : 'false' }} }">
+            <form method="POST" action="{{ route('events.update', $event) }}" class="p-6" enctype="multipart/form-data" 
+                x-data="{ 
+                    isMultipleDays: {{ $event->is_multi_day ? 'true' : 'false' }},
+                    editMap: null,
+                    editMarker: null,
+                    initEditMap() {
+                        if (this.editMap) {
+                            this.editMap.remove();
+                            this.editMap = null;
+                        }
+                        
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                const mapElement = document.getElementById('edit-map-{{ $event->id }}');
+                                if (!mapElement) return;
+
+                                const lat = {{ $event->latitude ?? 6.1319 }};
+                                const lng = {{ $event->longitude ?? 1.2228 }};
+                                
+                                this.editMap = L.map(mapElement).setView([lat, lng], 13);
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                    attribution: '© OpenStreetMap contributors'
+                                }).addTo(this.editMap);
+
+                                this.editMarker = L.marker([lat, lng]).addTo(this.editMap);
+
+                                const searchControl = L.Control.geocoder({
+                                    defaultMarkGeocode: false
+                                }).addTo(this.editMap);
+
+                                searchControl.on('markgeocode', (e) => {
+                                    const { center, name } = e.geocode;
+                                    this.editMarker.setLatLng(center);
+                                    this.editMap.setView(center, 16);
+                                    document.getElementById('edit-latitude-{{ $event->id }}').value = center.lat.toFixed(6);
+                                    document.getElementById('edit-longitude-{{ $event->id }}').value = center.lng.toFixed(6);
+                                    document.getElementById('edit-location-{{ $event->id }}').value = name;
+                                });
+
+                                this.editMap.on('click', (e) => {
+                                    this.editMarker.setLatLng(e.latlng);
+                                    document.getElementById('edit-latitude-{{ $event->id }}').value = e.latlng.lat.toFixed(6);
+                                    document.getElementById('edit-longitude-{{ $event->id }}').value = e.latlng.lng.toFixed(6);
+                                });
+
+                                this.editMap.invalidateSize();
+                            }, 300);
+                        });
+                    }
+                }"
+                x-init="$watch('$store.modal.isOpen', value => { if (value) { initEditMap() } })"
+            >
                 @csrf
                 @method('PUT')
 
@@ -685,10 +813,27 @@
                     </div>
                 </div>
 
-                <div class="mt-6">
-                    <x-input-label for="location-{{ $event->id }}" :value="__('Lieu')" />
-                    <x-text-input id="location-{{ $event->id }}" name="location" type="text" class="mt-1 block w-full" :value="old('location', $event->location)" required />
-                    <x-input-error class="mt-2" :messages="$errors->get('location')" />
+                <!-- Lieu et carte pour la modification -->
+                <div class="space-y-4">
+                    <div>
+                        <x-input-label for="edit-location-{{ $event->id }}" :value="__('Lieu')" />
+                        <x-text-input id="edit-location-{{ $event->id }}" name="location" type="text" class="mt-1 block w-full" :value="old('location', $event->location)" required />
+                        <x-input-error class="mt-2" :messages="$errors->get('location')" />
+                    </div>
+
+                    <div class="border rounded-lg p-4">
+                        <div id="edit-map-{{ $event->id }}" class="h-64 w-full rounded-lg mb-4"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <x-input-label for="edit-latitude-{{ $event->id }}" :value="__('Latitude')" />
+                                <x-text-input id="edit-latitude-{{ $event->id }}" name="latitude" type="text" class="mt-1 block w-full" :value="old('latitude', $event->latitude ?? '6.1319')" readonly />
+                            </div>
+                            <div>
+                                <x-input-label for="edit-longitude-{{ $event->id }}" :value="__('Longitude')" />
+                                <x-text-input id="edit-longitude-{{ $event->id }}" name="longitude" type="text" class="mt-1 block w-full" :value="old('longitude', $event->longitude ?? '1.2228')" readonly />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-6">

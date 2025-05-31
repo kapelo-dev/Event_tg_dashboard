@@ -1,0 +1,36 @@
+/* Styles pour les selects */
+.form-select {
+    @apply block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500;
+    background-color: white;
+    padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.form-select option {
+    padding: 0.75rem;
+    background-color: white;
+    color: #374151;
+    cursor: pointer;
+}
+
+.form-select option:hover,
+.form-select option:focus {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+
+.form-select:focus {
+    @apply ring-2 ring-blue-500 border-blue-500;
+    outline: none;
+}
+
+/* Style pour le placeholder */
+.form-select option[value=""][disabled] {
+    color: #9ca3af;
+}

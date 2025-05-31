@@ -143,19 +143,19 @@
                             <div class="event-content hidden mt-6">
                                 <div class="overflow-x-auto">
                                     <table class="min-w-full divide-y divide-gray-200 table-fixed">
-                                        <thead>
-                                            <tr class="bg-gradient-to-r from-indigo-50 to-purple-50">
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Code</th>
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Prix</th>
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Utilisateur</th>
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Statut</th>
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Paiement</th>
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Référence</th>
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Créé le</th>
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Validé le</th>
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Agent</th>
-                                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                                        <thead class="bg-blue-500">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Code</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Type</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Prix</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Utilisateur</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Statut</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Paiement</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Référence</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Créé le</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Validé le</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Agent</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">

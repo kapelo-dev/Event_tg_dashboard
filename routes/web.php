@@ -7,6 +7,7 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TicketTypeController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\AgentController;
+use App\Http\Controllers\PromoCodeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -47,6 +48,10 @@ Route::middleware('auth')->group(function () {
 
     // Agents routes
     Route::resource('agents', AgentController::class);
+
+    // Promo Codes routes
+    Route::resource('promo-codes', PromoCodeController::class);
+    Route::post('promo-codes/validate', [PromoCodeController::class, 'validateCode'])->name('promo-codes.validate');
 });
 
 require __DIR__.'/auth.php';

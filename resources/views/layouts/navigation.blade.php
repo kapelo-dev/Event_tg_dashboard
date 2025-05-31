@@ -30,6 +30,9 @@
                     <x-nav-link :href="route('agents.index')" :active="request()->routeIs('agents.*')">
                         <i class="fas fa-users mr-2"></i>{{ __('Agents') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('promo-codes.index')" :active="request()->routeIs('promo-codes.*')">
+                        <i class="fas fa-percent mr-2"></i>{{ __('Codes Promo') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -107,6 +110,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('agents.index')" :active="request()->routeIs('agents.*')">
                 {{ __('Agents') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('promo-codes.index')" :active="request()->routeIs('promo-codes.*')">
+                {{ __('Codes Promo') }}
             </x-responsive-nav-link>
         </div>
 
