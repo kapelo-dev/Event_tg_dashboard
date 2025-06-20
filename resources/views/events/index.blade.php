@@ -205,7 +205,7 @@
         </div>
     </div>
 
-    <!-- Inclure les fichiers CSS et JS de Leaflet au début du fichier -->
+    <!-- Inclure les fichiers CSS et JS de Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -253,6 +253,14 @@
                                 this.createMarker.setLatLng(e.latlng);
                                 document.getElementById('create-latitude').value = e.latlng.lat.toFixed(6);
                                 document.getElementById('create-longitude').value = e.latlng.lng.toFixed(6);
+
+                                // Faire une recherche inverse pour obtenir l'adresse
+                                const geocoder = L.Control.Geocoder.nominatim();
+                                geocoder.reverse(e.latlng, this.createMap.options.crs.scale(this.createMap.getZoom()), (results) => {
+                                    if (results && results.length > 0) {
+                                        document.getElementById('create-location').value = results[0].name;
+                                    }
+                                });
                             });
 
                             this.createMap.invalidateSize();
@@ -720,6 +728,14 @@
                                     this.editMarker.setLatLng(e.latlng);
                                     document.getElementById('edit-latitude-{{ $event->id }}').value = e.latlng.lat.toFixed(6);
                                     document.getElementById('edit-longitude-{{ $event->id }}').value = e.latlng.lng.toFixed(6);
+                                    
+                                    // Faire une recherche inverse pour obtenir l'adresse
+                                    const geocoder = L.Control.Geocoder.nominatim();
+                                    geocoder.reverse(e.latlng, this.editMap.options.crs.scale(this.editMap.getZoom()), (results) => {
+                                        if (results && results.length > 0) {
+                                            document.getElementById('edit-location-{{ $event->id }}').value = results[0].name;
+                                        }
+                                    });
                                 });
 
                                 this.editMap.invalidateSize();
